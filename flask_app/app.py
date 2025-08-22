@@ -8,7 +8,6 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# Define expected columns based on encoded_real_estate_data.csv
 valid_types = ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'Terrain', 'Villa']
 towns = [
     'Ain benian', 'Ain naadja', 'Ain taya', 'Alger centre', 'Bab el oued', 'Bab ezzouar',
@@ -25,7 +24,6 @@ towns = [
 ]
 expected_columns = ['surface'] + [f'type_{ptype}' for ptype in valid_types] + [f'town_{town}' for town in towns]
 
-# Load model, scaler, and test_mae
 model, scaler, test_mae = None, None, 0
 try:
     model_path = '../Models/immo_price_prediction_model.pkl'
@@ -92,7 +90,6 @@ def index():
                 'town': town
             })
 
-            # Input validation
             if not surface:
                 errors['surface'] = "Surface requise"
             else:
@@ -128,26 +125,22 @@ def index():
                 print("Validation errors:", errors)
                 return render_template('index.html', errors=errors, result=result, submitted_info=submitted_info)
 
-            # Prepare input for model
             input_data = pd.DataFrame({
                 'surface': [np.log1p(surface)],
                 f'type_{property_type}': [1],
                 f'town_{town}': [1]
             })
 
-            # Ensure input matches expected columns
             for col in expected_columns:
                 if col not in input_data:
                     input_data[col] = 0
             input_data = input_data[expected_columns]
 
-            # Scale and predict
             input_scaled = scaler.transform(input_data)
             predicted_price_log = float(model.predict(input_scaled)[0])
             if np.isnan(predicted_price_log) or predicted_price_log <= 0:
                 raise ValueError("Invalid prediction from model")
 
-            # Convert back from log-scale to original price scale
             predicted_price = np.expm1(predicted_price_log)
             min_price_log = predicted_price_log - test_mae
             max_price_log = predicted_price_log + test_mae
@@ -171,7 +164,6 @@ def index():
                 'town': town
             }
 
-            # Log prediction to file
             try:
                 prediction_data = pd.DataFrame({
                     'surface': [surface],

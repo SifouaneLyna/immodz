@@ -441,7 +441,6 @@
     </div>
 
     <script>
-      // Debug: Log errors object on page load
       const errors = {
         surface: "{{ errors.surface | default('') }}",
         main_property_type: "{{ errors.main_property_type | default('') }}",
@@ -451,7 +450,6 @@
       };
       console.log("Errors object:", errors);
 
-      // Debug: Check error elements in DOM
       document.addEventListener("DOMContentLoaded", () => {
         const errorElements = document.querySelectorAll(".error-text");
         errorElements.forEach((el, index) => {
@@ -471,7 +469,6 @@
       const priceSlider = document.getElementById("priceSlider");
       const priceLabel = document.getElementById("priceLabel");
 
-      // Debug: Log result values
       console.log("Result values:", {
         minPriceRaw: "{{ result.min_price_raw | default('undefined') }}",
         predictedPriceRaw:
@@ -614,7 +611,7 @@
             ? "Terrain"
             : "";
         }
-        // Debug: Check error elements after update
+
         const errorElements = document.querySelectorAll(".error-text");
         errorElements.forEach((el, index) => {
           console.log(`Error element ${index} after updatePropertyType:`, {
@@ -637,7 +634,6 @@
       }
       updatePropertyType();
 
-      // Debug: Log form submission
       document.querySelector("form").addEventListener("submit", (e) => {
         console.log("Form submitted");
         const formData = new FormData(e.target);

@@ -1,6 +1,6 @@
 # Immodz Real Estate Price Prediction
 
-This repository contains a machine learning model training script and a Flask web application for real estate price prediction in Algeria.
+This repository contains a machine learning model training script and a Flask web application for real estate price prediction in Algiers, Algeria.
 
 ## Project Structure
 
@@ -15,7 +15,7 @@ This repository contains a machine learning model training script and a Flask we
 ## Requirements
 
 - **Python**: 3.12.6 (compatible with 3.9–3.12)
-- **Input File**: `ads_export.json` (not included, must be provided for `train.py`)
+- **Input File**: `ads_export.json` (must be provided for `train.py`)
 
 ## Setup
 
