@@ -7,6 +7,10 @@ This repository contains a machine learning model training script and a Flask we
 - `data/ads_export.json`: Input file contains the database.
 - `train.py`: Trains a GradientBoostingRegressor model using `ads_export.json`.
 - `requirements.txt`: Dependencies for `train.py`.
+- `Models/`:
+  - `immo_price_prediction_model.pkl`: Trained model.
+  - `scaler.pkl`: Scaler.
+  - `test_mae.pkl`: Test MAE.
 - `flask_app/`:
   - `app.py`: Flask web app for price predictions.
   - `requirements.txt`: Dependencies for `app.py`.
