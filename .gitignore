@@ -7,8 +7,9 @@ __pycache__/
 venv/
 *.egg-info/
 # Model and data files
-Models/
+encoded_real_estate_data.csv
 predictions.csv
+data/ads_export.json
 # IDE and OS files
 .idea/
 *.DS_Store

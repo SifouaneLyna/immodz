@@ -12,7 +12,7 @@ import os
 os.makedirs('Models', exist_ok=True)
 
 try:
-    with open('ads_export.json', 'r', encoding='utf-8') as f:
+    with open('./data/ads_export.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
         print(f"Loaded {len(data)} records from ads_export.json")
 except Exception as e:

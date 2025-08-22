@@ -4,6 +4,7 @@ This repository contains a machine learning model training script and a Flask we
 
 ## Project Structure
 
+- `data/ads_export.json`: Input file contains the database.
 - `train.py`: Trains a GradientBoostingRegressor model using `ads_export.json`.
 - `requirements.txt`: Dependencies for `train.py`.
 - `flask_app/`:
@@ -37,7 +38,7 @@ This repository contains a machine learning model training script and a Flask we
    ```bash
    pip install -r requirements.txt
    ```
-4. Place `ads_export.json` in the project root.
+4. Place `ads_export.json` in the data repositpry.
 5. Run the training script:
    ```bash
    python train.py
