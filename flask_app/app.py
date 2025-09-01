@@ -3,7 +3,9 @@ import joblib
 import pandas as pd
 import numpy as np
 import os
+import re
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.feature_extraction.text import TfidfVectorizer
 from datetime import datetime
 
 app = Flask(__name__)
@@ -22,9 +24,11 @@ towns = [
     'Said hamdine', 'Saoula', 'Sidi mhamed', 'Sidi moussa', 'Souidania', 'Staoueli',
     'Tessala el merdja', 'Zeralda'
 ]
-expected_columns = ['surface'] + [f'type_{ptype}' for ptype in valid_types] + [f'town_{town}' for town in towns]
+expected_columns = ['surface'] + [f'type_{ptype}' for ptype in valid_types] + \
+                  [f'town_{town}' for town in towns] + [f'tfidf_{i}' for i in range(200)]
 
-model, scaler, test_mae = None, None, 0
+
+model, scaler, tfidf, test_mae = None, None, None, 0
 try:
     model_path = '../Models/immo_price_prediction_model.pkl'
     if not os.path.exists(model_path):
@@ -46,6 +50,17 @@ except Exception as e:
     print(f"Error loading scaler: {e}")
 
 try:
+    tfidf_path = '../Models/tfidf_vectorizer.pkl'
+    if not os.path.exists(tfidf_path):
+        raise FileNotFoundError(f"TF-IDF vectorizer file not found: {tfidf_path}")
+    tfidf = joblib.load(tfidf_path)
+    if not isinstance(tfidf, TfidfVectorizer):
+        raise TypeError("Loaded TF-IDF is not a TfidfVectorizer")
+    print("TF-IDF vectorizer loaded successfully")
+except Exception as e:
+    print(f"Error loading TF-IDF vectorizer: {e}")
+
+try:
     mae_path = '../Models/test_mae.pkl'
     if not os.path.exists(mae_path):
         raise FileNotFoundError(f"Test MAE file not found: {mae_path}")
@@ -53,6 +68,13 @@ try:
     print("Test MAE loaded successfully:", test_mae)
 except Exception as e:
     print(f"Error loading test_mae: {e}")
+
+
+def clean_text(text):
+    text = str(text)
+    text = re.sub(r'[\u0600-\u06FF]', ' ', text.lower())
+    text = re.sub(r'\W+', ' ', text)
+    return text.strip()
 
 def format_centimes(price):
     if not isinstance(price, (int, float)) or price <= 0:
@@ -83,11 +105,13 @@ def index():
             main_property_type = request.form.get('main_property_type')
             property_type = request.form.get('property_type') if main_property_type == 'Apartment' else main_property_type
             town = request.form.get('town')
+            description = request.form.get('description', '').strip()
             print("Form data:", {
                 'surface': surface,
                 'main_property_type': main_property_type,
                 'property_type': property_type,
-                'town': town
+                'town': town,
+                'description': description
             })
 
             if not surface:
@@ -117,24 +141,37 @@ def index():
             elif town.lower() not in [t.lower() for t in towns]:
                 errors['town'] = f"Ville invalide: {town}"
 
-            if model is None or scaler is None or test_mae == 0:
-                errors['general'] = "Erreur: Modèle, scaler ou MAE non chargé. Vérifiez les fichiers dans C:/Users/Dell/Desktop/immodz/Models/."
-                print("Error: Model, scaler, or test_mae is None")
+            if description and (len(description) < 5 or len(description) > 500):
+                errors['description'] = "La description doit contenir entre 5 et 500 caractères"
+
+            if model is None or scaler is None or tfidf is None or test_mae == 0:
+                errors['general'] = "Erreur: Modèle, scaler, TF-IDF ou MAE non chargé. Vérifiez les fichiers dans C:/Users/Dell/Desktop/immodz/Models/."
+                print("Error: Model, scaler, TF-IDF, or test_mae is None")
 
             if errors:
                 print("Validation errors:", errors)
                 return render_template('index.html', errors=errors, result=result, submitted_info=submitted_info)
 
+            if description:
+                cleaned_description = clean_text(description)
+                tfidf_features = tfidf.transform([cleaned_description]).toarray()
+            else:
+                tfidf_features = np.zeros((1, 200)) 
+            tfidf_df = pd.DataFrame(tfidf_features, columns=[f'tfidf_{i}' for i in range(200)])
+
+            # Prepare input data
             input_data = pd.DataFrame({
                 'surface': [np.log1p(surface)],
                 f'type_{property_type}': [1],
                 f'town_{town}': [1]
             })
+            input_data = pd.concat([input_data, tfidf_df], axis=1)
 
-            for col in expected_columns:
-                if col not in input_data:
-                    input_data[col] = 0
-            input_data = input_data[expected_columns]
+            input_data = input_data.reindex(columns=expected_columns, fill_value=0)
+            print("Input data columns:", list(input_data.columns))
+            print("Expected columns:", expected_columns)
+            if list(input_data.columns) != expected_columns:
+                raise ValueError("Input data columns do not match expected columns")
 
             input_scaled = scaler.transform(input_data)
             predicted_price_log = float(model.predict(input_scaled)[0])
@@ -161,7 +198,8 @@ def index():
             submitted_info = {
                 'surface': f"{surface:,.1f}",
                 'property_type': f"Appartement ({property_type})" if main_property_type == 'Apartment' else property_type,
-                'town': town
+                'town': town,
+                'description': description if description else ''
             }
 
             try:
@@ -169,12 +207,13 @@ def index():
                     'surface': [surface],
                     'property_type': [submitted_info['property_type']],
                     'town': [town],
+                    'description': [description],
                     'predicted_price': [predicted_price],
                     'min_price': [min_price],
                     'max_price': [max_price],
                     'timestamp': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
                 })
-                prediction_data.to_csv('../predictions.csv', mode='a', header=not pd.io.common.file_exists('../predictions.csv'), index=False)
+                prediction_data.to_csv('../predictions.csv', mode='a', header=not pd.io.common.file_exists('predictions.csv'), index=False)
             except Exception as e:
                 errors['general'] = f"Erreur lors de l'enregistrement: {str(e)}"
                 print(f"CSV error: {e}")

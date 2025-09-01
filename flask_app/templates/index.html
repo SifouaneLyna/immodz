@@ -27,29 +27,32 @@
       .left-box,
       .right-box {
         padding: 30px;
-        min-height: 400px;
+        min-height: 450px;
         display: flex;
         flex-direction: column;
         justify-content: center;
       }
       .form-container {
-        min-height: 350px;
+        min-height: 400px;
       }
       .form-label {
         font-weight: 500;
       }
       .form-control,
-      .form-select {
+      .form-select,
+      .form-control-textarea {
         font-size: 0.9rem;
         padding: 10px;
       }
       .form-control:hover,
-      .form-select:hover {
+      .form-select:hover,
+      .form-control-textarea:hover {
         border-color: #af70af;
         background-color: rgba(200, 116, 200, 0.1);
       }
       .form-control:focus,
-      .form-select:focus {
+      .form-select:focus,
+      .form-control-textarea:focus {
         border-color: #9a5c9a;
         box-shadow: 0 0 0 0.2rem rgba(200, 116, 200, 0.25);
         background-color: #fff;
@@ -60,6 +63,12 @@
       .error-text {
         color: #ff0000;
         font-size: 0.8rem;
+        margin-top: 5px;
+        display: block;
+      }
+      .char-counter {
+        font-size: 0.8rem;
+        color: #666;
         margin-top: 5px;
         display: block;
       }
@@ -81,6 +90,8 @@
         font-size: 0.9rem;
         font-weight: 500;
         text-align: center;
+        max-width: 90%;
+        margin: 0 auto;
       }
       .btn-primary {
         background-color: #b97bb9;
@@ -199,10 +210,10 @@
         .left-box,
         .right-box {
           padding: 20px;
-          min-height: 300px;
+          min-height: 350px;
         }
         .form-container {
-          min-height: 250px;
+          min-height: 300px;
         }
       }
     </style>
@@ -378,6 +389,25 @@
                 <small class="error-text">{{ errors.town }}</small>
                 {% endif %}
               </div>
+              <div class="form-group">
+                <label for="description" class="form-label"
+                  >Description (optionnel)</label
+                >
+                <textarea
+                  class="form-control form-control-textarea bg-light"
+                  name="description"
+                  id="description"
+                  rows="4"
+                  maxlength="500"
+                  placeholder="ex. Appartement avec cuisine équipée, jardin, climatisation"
+                ></textarea>
+                <small class="char-counter" id="char-counter"
+                  >0/500 caractères</small
+                >
+                {% if errors.description %}
+                <small class="error-text">{{ errors.description }}</small>
+                {% endif %}
+              </div>
               <div class="d-grid">
                 <button type="submit" class="btn btn-primary btn-sm">
                   Prédire
@@ -397,6 +427,9 @@
               Type de propriété: <span>{{ submitted_info.property_type }}</span>
             </p>
             <p>Ville: <span>{{ submitted_info.town }}</span></p>
+            {% if submitted_info.description %}
+            <p>Description: <span>{{ submitted_info.description }}</span></p>
+            {% endif %}
             <p>
               Prix exact:
               <span
@@ -446,6 +479,7 @@
         main_property_type: "{{ errors.main_property_type | default('') }}",
         property_type: "{{ errors.property_type | default('') }}",
         town: "{{ errors.town | default('') }}",
+        description: "{{ errors.description | default('') }}",
         general: "{{ errors.general | default('') }}",
       };
       console.log("Errors object:", errors);
@@ -457,6 +491,40 @@
             text: el.innerText,
             visible: el.offsetParent !== null,
           });
+        });
+
+        // Character counter for description
+        const descriptionInput = document.getElementById("description");
+        const charCounter = document.getElementById("char-counter");
+        descriptionInput.addEventListener("input", () => {
+          const length = descriptionInput.value.length;
+          charCounter.innerText = `${length}/500 caractères`;
+        });
+
+        // Client-side validation for description
+        document.querySelector("form").addEventListener("submit", (e) => {
+          const description = descriptionInput.value;
+          const existingError = document.querySelector(
+            "#description + .error-text"
+          );
+          if (
+            description &&
+            (description.length < 5 || description.length > 500)
+          ) {
+            e.preventDefault();
+            if (!existingError) {
+              const error = document.createElement("small");
+              error.className = "error-text";
+              error.innerText =
+                "La description doit contenir entre 5 et 500 caractères";
+              descriptionInput.parentElement.insertBefore(error, charCounter);
+            }
+          } else if (existingError) {
+            existingError.remove();
+          }
+          console.log("Form submitted");
+          const formData = new FormData(e.target);
+          console.log("Form data:", Object.fromEntries(formData));
         });
       });
 
@@ -633,12 +701,6 @@
         updatePriceLabel();
       }
       updatePropertyType();
-
-      document.querySelector("form").addEventListener("submit", (e) => {
-        console.log("Form submitted");
-        const formData = new FormData(e.target);
-        console.log("Form data:", Object.fromEntries(formData));
-      });
     </script>
   </body>
 </html>

@@ -10,7 +10,9 @@ This repository contains a machine learning model training script and a Flask we
 - `Models/`:
   - `immo_price_prediction_model.pkl`: Trained model.
   - `scaler.pkl`: Scaler.
+  - `tfidf_vectorizer.pkl`: TF-IDF vectorizer.
   - `test_mae.pkl`: Test MAE.
+  - `expected_columns.pkl`: Expected feature columns.
 - `flask_app/`:
   - `app.py`: Flask web app for price predictions.
   - `requirements.txt`: Dependencies for `app.py`.
@@ -52,6 +54,8 @@ This repository contains a machine learning model training script and a Flask we
 - `Models/immo_price_prediction_model.pkl`: Trained model
 - `Models/scaler.pkl`: Scaler
 - `Models/test_mae.pkl`: Test MAE
+- `tfidf_vectorizer.pkl`: TF-IDF vectorizer.
+- `expected_columns.pkl`: Expected feature columns.
 - `encoded_real_estate_data.csv`: Processed dataset
 
 ### Running Flask App (`app.py`)
